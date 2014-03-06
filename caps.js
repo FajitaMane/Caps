@@ -1,6 +1,6 @@
 //Capulets and Montagues
 //Author: @Fajita_Mane
-version = 'pre-alpha 0.8';
+version = 'pre-alpha 0.8.1';
 $('#version').html('Current version: '+version);
 ///////////////////////card constructor////////////////////
 function card (suit, symbol, val) {
@@ -216,6 +216,11 @@ function army (suit, player) {
             if (!alive(this.card(11)) || !alive(target)){
                     msg('The '+this.suit+' apothecary can\'t heal from the grave');
             } else {
+                if (target.suit == 'Montague'){
+                    clr = 'blue';
+                } else {
+                    clr = 'red';
+                }
                 msg('The ' + this.suit + ' apothecary heals his ' + target.sym);
                 //restores the target's hp to max
                 target.hp = target.val;
@@ -295,6 +300,8 @@ function roll () {
 function checkEnd(){
     if(!alive(army1.card(14))){
         msg('The '+army1.suit+' patriarch has fallen in battle. The '+army2.suit+' house will feast to this victory!');
+        user.state = 'post';
+        renderField();
         return true;
     }
     if (!alive(army2.card(14))){
@@ -315,43 +322,51 @@ function validMove (card1, card2){
     } else if (!army2.open(card2.pk)){
         msg(card2.idstr+' not open');
         return false;
+    } else if (!alive(card1) || !alive(card2)){
+        msg('Can\'t attack a dead card');
+        return false;
     } else {
         return true;
     }
 }
 
-function attack (card1, card2, initBy) {
+function attack(card1, card2, initBy) {
     var atk = card1.val + roll();
     var def = card2.val + roll();
     var dmg = Math.abs(atk - def);
+    if (initBy){
+        userGood = true;
+    } else {
+        userGood = false;
+    }
     //inaccurate logging
     if (atk > def) {
         //succesful attack
         card2.hp = card2.hp - dmg;
         if (card2.hp <= 0) {
-            msg('The ' + card1.idstr + ' strikes down the ' + card2.idstr + ' with ' + dmg.toString() + ' damage');
+            msg('The ' + card1.idstr + ' strikes down the ' + card2.idstr + ' with ' + dmg.toString() + ' damage', userGood);
             if (card2.sym == 'K'){
-                msg('<strong>'+card1.idstr + ' strikes the winning blow. The ' + card1.suit + '\'s are victorious!!!'+'</strong>');
+                msg('<strong>'+card1.idstr + ' strikes the winning blow. The ' + card1.suit + '\'s are victorious!!!'+'</strong>', userGood);
                 return;
             }
         } else {
-            msg('The ' + card1.idstr + ' strikes the '+card2.idstr+' for ' + dmg.toString() + ' damage. ' + card2.hp.toString() + ' remaining');
+            msg('The ' + card1.idstr + ' strikes the '+card2.idstr+' for ' + dmg.toString() + ' damage. ' + card2.hp.toString() + ' remaining', userGood);
         }
 
     } //stalemeate
     else if (atk == def) {
-        msg('Stalemate. '+card1.idstr+'\'s attack is unsuccesful');
+        msg('Stalemate. '+card1.idstr+'\'s attack is unsuccesful', userGood);
     } //succesful defense
     else {
         card1.hp = card1.hp - dmg;
         if (card1.hp <= 0) {
             if (card1.sym == 'K'){
-                msg(card2.idstr + ' cuts down '+card1.idstr+' as he pleads for mercy. The '+card.suit+'s are defeated...');
+                msg(card2.idstr + ' cuts down '+card1.idstr+' as he pleads for mercy. The '+card.suit+'s are defeated...', !userGood);
             }
-            msg('The ' + card2.idstr + ' counters the' + card1.idstr + 's attack for a kill with '+dmg.toString()+' damage!' );
+            msg('The ' + card2.idstr + ' counters the' + card1.idstr + 's attack for a kill with '+dmg.toString()+' damage!', !userGood);
             
         } else {
-            msg('The ' + card2.idstr + ' counters the  '+card1.idstr+' attack for ' + dmg.toString() + ' damage. ' + card1.hp.toString() + ' remaining.');
+            msg('The ' + card2.idstr + ' counters the  '+card1.idstr+' attack for ' + dmg.toString() + ' damage. ' + card1.hp.toString() + ' remaining.', !userGood);
         }
     }
     switch (dmg){
@@ -399,7 +414,7 @@ function AIMove(){
         army2.pow_a(army2.hpmin());
         return;
     }
-    if (alive(army2.card(12)) && army2.open(12)){
+    if (alive(army2.card(12)) && army2.open(12) && !alive(army1.card(8))){
                         army2.pow_j();
                         return;
     }
@@ -449,14 +464,17 @@ function AIOrderedAttack(atkcards, dfdcards){
             break;
         }
     }
-    console.log('AI attack cord '+atkCard.sym);
-    console.log('AI defend card '+dfdCard.sym);
-    attack(atkCard, dfdCard);
+    //make the attack and check for a kill
+    attack(atkCard, dfdCard, false);
     if (!alive(dfdCard)){
-        msg('The '+atkCard.idstr+'\'s attack was succesful! They are granted a potion');
-        setTimeout(function(){
-            AIPot(drawPot())
-        }, 1000);
+        msg('The '+atkCard.idstr+'\'s attack was succesful! They are granted a potion', false);
+        if (army2.hpmin().hp != army2.hpmin().val){
+            setTimeout(function(){
+                AIPot(drawPot())
+            }, 1000);
+        } else {
+            msg('The '+atkCard.suit+'\s can\'t use the potion', false);
+        }
     }
 }
 
@@ -533,12 +551,21 @@ var user = {
 function userTurn(){
     //console.log('Attacking '+army1.card(user.atk).idstr+' on '+army2.card(user.def).idstr);
     if (validMove(user.atk, user.def)){
-        attack(user.atk, user.def);
+        attack(user.atk, user.def, true);
         //if your attack kills a card, draw a potion
         if (!alive(user.def)){
-            user.state = 'pot';
-            var pot = drawPot();
-            msg('You are granted a '+pot+' potion. Select card to heal');
+            if (army1.hpmin().hp != army1.hpmin().val){
+                //you can use your potion
+                user.state = 'pot';
+                msg('You are granted a potion. Select card to heal', true);
+            } else {
+                //all your army is at full health - proceed to AI turn
+                msg('You can\'t use your potion', true);
+                setTimeout(function(){
+                    user.state = 'AI';
+                    AIMove();
+                }, 500);
+            }
         } else {
             setTimeout(function(){
                 msg('The '+army2.suit+' king contemplates his move');
@@ -599,8 +626,14 @@ $('html').keypress(function(e){
     } else {
         key = '';
     }
+    handleInput(key);
     //handles keypress event by user.state
-  switch (user.state){
+  
+  
+});
+
+function handleInput(key){
+    switch (user.state){
     case 'atk': $('#attacking').html(key.toString());
                 user.atk = army1.card(key);
                 user.state = 'def';
@@ -619,7 +652,7 @@ $('html').keypress(function(e){
                     } else {
                         c.hp = c.val;
                     }
-                    msg('You heal your '+c.sym+' for '+pot+' hp');
+                    msg('You heal your '+c.sym+' for '+pot+' hp', true);
                     user.state = 'AI';
                     renderField();
                     setTimeout(function(){AITurn()}, 2000);
@@ -629,8 +662,7 @@ $('html').keypress(function(e){
         break;
     //default: console.log('keypress handler is confused');
   }
-  
-});
+}
 
 //maps keystrokes to army.card(x) handler
 var keys = {
@@ -700,10 +732,15 @@ turn = 1;
 
 //this alerts the player to the result after a succeful move
 var msgDiv = document.getElementById('message');
-function msg (t){
+function msg(t, userPos){
     //why this ain't working?
+    if (userPos){
+        clr = 'blue';
+    } else {
+        clr = 'red';
+    }
     hr = document.createElement('hr');
-    msgDiv.innerHTML += '<p>'+t+'</p>'+'<hr>';
+    msgDiv.innerHTML += '<p style="color: '+clr+'">'+t+'</p>'+'<hr>';
     msgDiv.scrollTop = msgDiv.scrollHeight;
 }
 //returns the state of the army specified by the argument
@@ -761,6 +798,10 @@ var w = 50;
 //rendering a card onto the screen
 function drawCard(x, y, c) {
     if (alive(c)){
+        //register coord variables
+        c.topLeft = [x, y];
+        c.botRight = [x + w, y + h];
+        //render the card
         ctx.beginPath();
         ctx.lineWidth = 1;
         ctx.strokeStyle = "black";
@@ -842,6 +883,8 @@ function renderField(){
         case 'pot': hint = 'Pick which card to heal with your potion';
         break;
         case 'AI': hint = 'Your opponent is making a move';
+        break;
+        case 'post': hint = 'The battle is finished';
     }
     $('#hint').html(hint);
 }
@@ -856,3 +899,58 @@ $('#instructions').click(function(){
         $('#instructions').animate({left: '-=390'}, 300);
     }
 });
+
+can.addEventListener('click', fieldClick, false);
+//handles event clicks and maps to the canvas
+function fieldClick(e){
+    clickX = e.layerX;
+    clickY = e.layerY;
+    //search for click's bounding rect in army1 coords if state calls for it
+    if (user.state == 'atk' || user.state == 'pot'){
+        for (var i = 0; i < army1.list.length; i++){
+            if (clickX >= army1.list[i].topLeft[0] && clickY >= army1.list[i].topLeft[1] 
+                && clickX <= army1.list[i].botRight[0] && clickY <= army1.list[i].botRight[1]){
+                console.log('Clicked '+army1.list[i].idstr);
+                handleInput(army1.list[i].pk)
+                return;
+            }
+        }
+        //otherwise, search in army2 coords
+    } else {
+        for (var i = 0; i < army2.list.length; i++){
+            if (clickX >= army2.list[i].topLeft[0] && clickY >= army2.list[i].topLeft[1] 
+                && clickX <= army2.list[i].botRight[0] && clickY <= army2.list[i].botRight[1]){
+                console.log('Clicked '+army2.list[i].idstr);
+                handleInput(army2.list[i].pk)
+                return;
+            }
+        }
+    }
+    console.log('Click mapping function done and fucked up');
+}
+//////////////////////////////////////////////////////////
+/////////////////////Debugging Helpers///////////////////
+function jumpTo(state){
+
+    for (index in stateCards){
+        console.log('looking in '+index);
+        for (var i = 0; i = stateCards[index].length; i++){
+            console.log(stateCards[index][i]);
+            army1.card(stateCards[index][i]).hp = 0;
+            army2.card(stateCards[index][i]).hp = 0;
+        }
+        if (index = state){
+            return;
+        }
+    }
+    renderField();
+    getState(army1);
+    getstate(army2);
+}
+stateCards = {
+    'EE': [2, 3],
+    'E': [4, 5, 6],
+    'M': [7, 8, 9],
+    'L': [10, 11],
+    'LL': [12]
+};
