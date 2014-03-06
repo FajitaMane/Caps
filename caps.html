@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<header>
+<link href='http://fonts.googleapis.com/css?family=Flamenco' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" type="text/css" href="capstyles.css">
+<!--<link rel="stylesheet" href="/fancybox/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />-->
+
+
+</header>
+<body>
+<h1 id="title">Capulets and Montagues</h1><br>
+<h3 id="hint">Hints go here</h3>
+<p id="message"></p>
+<!--
+Here are the *lengthy and poorly organized* instructions.
+-->
+<div id="instructions">
+<p id="instructiontext">
+Montagues and capulets is a strategy game where you battle against a rival house.<br>
+The objective of the game is to kill the other house's king. The opponent and you take turns
+making attacks against the each other's armies. You may only make attacks with cards that are exposed e.g. they must 
+have no other cards in front of them when facing the enemy. After a card's hp drops below zero, that cards is dead
+and no longer in play.<br>
+You can select which card to attack and defend with by pressing the key that corresponds with that card. 
+The keys are as follows:<br>
+2: 2,   
+3: 3,     
+4: 4,     
+5: 5,     
+6: 6<br>
+7: 7,     
+8: 8,     
+9: 9,     
+10: 0,     
+A: a<br>
+J: j,     
+Q: q,     
+K: k<br>
+SPACEBAR clears the keys cards you've chosen for your move. ENTER makes an attack with the cards you've picked.<br>
+Killing an enemy card with your attack will grant you a potion. When prompted, press the key to which you would like to apply the potion. 
+</p>
+<p class="rotate">
+<strong>Click to expand instructions</strong>
+</p>
+</div>
+<!--
+Here are the dialog boxes and controls
+-->
+<div id="controls">
+<div class="dlg" id="army1dlg"><p>Attacker:</p> <h1 id="attacking"></h1></div>
+<div class="dlg" id="army2dlg"><p>Defender:</p> <h1 id="defending"></h1></div>
+<br>
+<div class="pow" id="aPow">Use A Power</div>
+<div class="pow" id="jPow">Use J Power</div>
+<div class="pow" id="qPow">Use Q Power</div>
+<div class="pow" id="kPow">Use K Power</div>
+</div>
+</body>
+<em id="version"></em>
+
+<footer>
+<!--load scripts here so they can access DOM -->
+	<script type="text/javascript" src="jquery.min.js"></script>
+	<script type="text/javascript" src="caps.js"></script>
+	<!--<script type="text/javascript" src="/fancybox/jquery.fancybox-1.3.4.pack.js"></script>-->
+
+
+</footer>
+</html>

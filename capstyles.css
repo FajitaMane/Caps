@@ -1,0 +1,100 @@
+#battlefield {
+    position: absolute;
+    z-index: 2;
+    background-color: #F5F5F5;
+    top: 160px;
+    left:400px;
+    border: 1px solid black;
+    border-radius: 5px;
+}
+#title{
+    font-family: 'Flamenco', serif;
+    font-size: 36px;
+}
+#hint {
+    margin-top: -25 px;
+}
+.container {
+    width: 48%;
+    height: 100%;
+    border: 1px solid black;
+    border-radius:5px;
+    display:block;
+}
+.rotate {
+    position:relative;
+    right:-180px;
+    top:-350px;
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
+#instructions {
+    z-index: 4;
+    padding:5px;
+    height:100px;
+    background-color: white;
+    border: 1px solid blue;
+    border-radius: 5px;
+    position:absolute;
+    width: 400px;
+    left:-365px;
+    height:400px;
+    cursor: pointer;
+    overflow-y:auto;
+}
+#instructiontext {
+    width: 90%;
+}
+/*this is the dialogue box in the top-left of the screen*/
+#message{
+    position:absolute;
+    z-index:1;
+    right:0px;
+    top:0px;
+    background-color:#FFFFFF;
+    border: 1px solid black;
+    border-radius: 5px;
+    width: 600px;
+    height: 145px;
+    padding: 5px;
+    margin: 0px;
+    overflow-y:auto;
+    font-family: 'Flamenco', serif;
+    font-size: 14px;
+}
+#controls {
+    position: absolute;
+    top:150px;
+    display: block;
+    left:150px;
+}
+.pow{
+    border:2px solid blue;
+    border-radius: 10px;
+    background-color:#F2F2F2;
+    cursor: pointer;
+    margin-bottom: 5px;
+    text-align:center;
+}
+.dlg{
+     height:100px;
+    width:100px;
+    border: 1px solid black;
+    text-align: center;
+}
+
+#army1dlg{
+}
+
+#army2dlg{
+}
+
+#version {
+    position:absolute;
+    top:0px;
+    left:0px;
+
+}
