@@ -212,7 +212,13 @@ function army (suit, player) {
     this.pow_a = function(target){
     if  (!this.open(11)){
         msg('The Apothecary must be open to use his power');
-    } else {
+        return false;
+    } /*else if (target == this.card(11)){
+        msg('The Apothercary can\'t heal himself');
+        return false;
+    }*/
+    //success
+    else {
             if (!alive(this.card(11)) || !alive(target)){
                     msg('The '+this.suit+' apothecary can\'t heal from the grave');
             } else {
@@ -224,7 +230,7 @@ function army (suit, player) {
                 msg('The ' + this.suit + ' apothecary heals his ' + target.sym);
                 //restores the target's hp to max
                 target.hp = target.val;
-                this.used = true;
+                this.card(11).used = true;
                 renderField();
             }
             turn++
@@ -288,6 +294,13 @@ function army (suit, player) {
             }
             this.card(14).used = true;
         };
+        //levels up a card
+        this.level = function(c){
+            if (c.sym != 'K'){
+                msg('The '+c.idstr+' gains experience and becomes more powerful');
+                c.val++
+            }
+        }
 };
 //////////////////////////////////////////////////////////
 //GAME FUNCTIONS//////////////////////////////////////////
@@ -305,7 +318,7 @@ function checkEnd(){
         return true;
     }
     if (!alive(army2.card(14))){
-        msg('The '+army1.suit+' house is victorious! Po\' up some mead, mufuckas!');
+        msg('The '+army1.suit+' house is victorious! Po\' up some mead!');
         return true;
     }
     return false;
@@ -361,7 +374,7 @@ function attack(card1, card2, initBy) {
         card1.hp = card1.hp - dmg;
         if (card1.hp <= 0) {
             if (card1.sym == 'K'){
-                msg(card2.idstr + ' cuts down '+card1.idstr+' as he pleads for mercy. The '+card.suit+'s are defeated...', !userGood);
+                msg(card2.idstr + ' cuts down '+card1.idstr+' as he pleads for mercy. The '+card1.suit+'s are defeated...', !userGood);
             }
             msg('The ' + card2.idstr + ' counters the' + card1.idstr + 's attack for a kill with '+dmg.toString()+' damage!', !userGood);
             
@@ -408,9 +421,8 @@ function AIMove(){
     //assumes that army2 is the AI
     getState(army2);
     state = army2.state;
-    console.log(state);
     //uses the powers if possible
-    if (army2.open(11) && alive(army2.card(11)) && !army2.card(11).used){
+    if (army2.open(11) && alive(army2.card(11)) && !army2.card(11).used && army2.hpmin().hp != army2.hpmin().val){
         army2.pow_a(army2.hpmin());
         return;
     }
@@ -426,7 +438,7 @@ function AIMove(){
     switch (state){
         case 'EE': AIOrderedAttack([army2.card(3), army2.card(2)], 
             //what the fuck is this?
-            [army1.card(5), army1.card(4),army1.card(2), army1.card(3), army1.card(4), army1.card(5), army1.card(6), army1.card(7)]);
+            [army1.card(5), army1.card(4),army1.card(2), army1.card(3), army1.card(6), army1.card(7)]);
                     break;
         case 'E': AIOrderedAttack([army2.card(10),army2.card(9),army2.card(8),army2.card(7), army2.card(6),army2.card(4), army2.card(5)], 
             [army1.card(2), army1.card(3),army1.card(5), army1.card(4), army1.card(6),army1.card(7), army1.card(8), army1.card(3), army1.card(2)]);
@@ -468,14 +480,18 @@ function AIOrderedAttack(atkcards, dfdcards){
     attack(atkCard, dfdCard, false);
     if (!alive(dfdCard)){
         msg('The '+atkCard.idstr+'\'s attack was succesful! They are granted a potion', false);
+        army2.level(atkCard);
         if (army2.hpmin().hp != army2.hpmin().val){
             setTimeout(function(){
                 AIPot(drawPot())
             }, 1000);
         } else {
             msg('The '+atkCard.suit+'\s can\'t use the potion', false);
+            use.state = 'atk';
         }
     }
+    //should the state be switched here as well?
+    renderField();
 }
 
 //determines how AI uses a pot where h is pot value
@@ -491,6 +507,18 @@ function AIPot (h){
     renderField();
 }
 
+function needPot(army){
+    //if king is low, heal the goddam king first
+    if (army1.card(14).hp < 5){
+        return army.card(14);
+    }
+    //the queen is also critical
+    if (army1.card(13).hp < 6){
+        return arm.card(13);
+    } else if (army.hpmin().val >= 7){
+        return army.hpmin();
+    }
+}
 /////////////////////////////////////////////////////////
 /////////////////Handles Potion deck////////////////////
 
@@ -532,7 +560,6 @@ function drawPot(){
 /////////////////////////////////////////////////////////////
 var user = {
     'army': army1,
-    'turn': true,
     //user.state changes after the user makes actions
     /*states
     atk = waiting for attack pick
@@ -549,11 +576,13 @@ var user = {
 }
 
 function userTurn(){
-    //console.log('Attacking '+army1.card(user.atk).idstr+' on '+army2.card(user.def).idstr);
+    //tests validity of user inputs before making tha attack
     if (validMove(user.atk, user.def)){
         attack(user.atk, user.def, true);
         //if your attack kills a card, draw a potion
         if (!alive(user.def)){
+            //level the attacking card
+            army1.level(user.atk);
             if (army1.hpmin().hp != army1.hpmin().val){
                 //you can use your potion
                 user.state = 'pot';
@@ -564,11 +593,11 @@ function userTurn(){
                 setTimeout(function(){
                     user.state = 'AI';
                     AIMove();
-                }, 500);
+                }, 200);
             }
         } else {
             setTimeout(function(){
-                msg('The '+army2.suit+' king contemplates his move');
+                msg('The '+army2.suit+' king contemplates his move...');
                 user.state = 'AI';
                 //sets the timeout to a different value based on the game's state
                 switch (army2.state){
@@ -634,12 +663,12 @@ $('html').keypress(function(e){
 
 function handleInput(key){
     switch (user.state){
-    case 'atk': $('#attacking').html(key.toString());
+    case 'atk': $('#attacking').html(army1.card(key).sym);
                 user.atk = army1.card(key);
                 user.state = 'def';
                 renderField();
         break;
-    case 'def': $('#defending').html(key.toString());
+    case 'def': $('#defending').html(army1.card(key).sym);
                 user.def = army2.card(key);
                 user.state = 'ent';
         break;
@@ -657,8 +686,10 @@ function handleInput(key){
                     renderField();
                     setTimeout(function(){AITurn()}, 2000);
                 } else {
-                    msg('You can\'t use your potion on a dead card');
+                    msg('You can\'t use your potion on a dead card', true);
                 }
+        break;
+    case 'aPow': army1.pow_a(key);
         break;
     //default: console.log('keypress handler is confused');
   }
@@ -680,29 +711,41 @@ var keys = {
     113: 13,
     107: 14
 }
-
+//wired j power - works
 $('#jPow').click(function(){
     if ((user.state == 'atk' || user.state == 'def' || user.state == 'ent') && army1.open(12) && alive(army1.card(12))){
         army1.pow_j();
+        //let the AI have a turn
         user.state = 'AI';
-        AITurn();
+        setTimeout(function(){
+            AITurn();
+        }, 500);
     } else {
-        msg('You can\'t use the Jack\'s power right now');
+        msg('You can\'t use the Jack\'s power right now', true);
     }
 });
-
+//wired q power - works (tentatively)
 $('#qPow').click(function(){
     if ((user.state == 'atk' || user.state == 'def' || user.state == 'ent') && army1.open(13) && alive(army1.card(13))){
         army1.pow_q();
+        //let the AI have a turn
         user.state = 'AI';
         setTimeout(function(){
             AITurn();
         }, 3000)
-        
     } else {
-        msg('You can\'t use the Queen\'s power right now');
+        //queen's if logic failed
+        msg('You can\'t use the Queen\'s power right now', true);
     }
 });
+//wired a power
+$('#aPow').click(function(){
+    if (army1.card(11).used == false && army1.open(11) && alive(army1.card(11))){
+        user.state = 'aPow';
+        msg('Which card should the a heal?', true);
+        renderField(); 
+    }
+})
 /////////////////////////////////////////////////////////////
 //here we begin to init the game
 
@@ -875,6 +918,7 @@ function renderField(){
     ctx.clearRect(0, 0, can.width, can.height);
     renderArmy1(army1);
     renderArmy2(army2);
+    //set the hint based on the user.state
     switch(user.state){
         case 'atk': hint = 'Choose a card to attack with';
         break;
@@ -883,6 +927,10 @@ function renderField(){
         case 'pot': hint = 'Pick which card to heal with your potion';
         break;
         case 'AI': hint = 'Your opponent is making a move';
+        break;
+        case 'aPow': hint = 'Which card shall the Apothecary heal?';
+        break;
+        case 'kPow': hint = 'Which card shall the King revive?';
         break;
         case 'post': hint = 'The battle is finished';
     }
@@ -911,7 +959,12 @@ function fieldClick(e){
             if (clickX >= army1.list[i].topLeft[0] && clickY >= army1.list[i].topLeft[1] 
                 && clickX <= army1.list[i].botRight[0] && clickY <= army1.list[i].botRight[1]){
                 console.log('Clicked '+army1.list[i].idstr);
-                handleInput(army1.list[i].pk)
+                if (alive(army1.list[i].pk)){
+                    handleInput(army1.list[i].pk);
+                } else {
+                    console.log('card is dead, yo');
+                }
+                
                 return;
             }
         }
@@ -930,6 +983,7 @@ function fieldClick(e){
 }
 //////////////////////////////////////////////////////////
 /////////////////////Debugging Helpers///////////////////
+/*
 function jumpTo(state){
 
     for (index in stateCards){
@@ -954,3 +1008,15 @@ stateCards = {
     'L': [10, 11],
     'LL': [12]
 };
+*/
+//jumps to late game
+function jumpToL(){
+    for (var i = 2; i <= 10; i++){
+        army1.card(i).hp = 0;
+        army2.card(i).hp = 0;
+        getState(army1);
+        getState(army2);
+        renderField();
+    }
+}
+//jumpToL();
