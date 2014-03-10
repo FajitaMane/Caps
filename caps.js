@@ -560,16 +560,18 @@ function AIOrderedAttack(atkcards, dfdcards){
     //should the state be switched here as well?
     renderField();
 }
-
+//checks if a pot is needed for the card
 AI.potCheck = function(atkCard, dfdCard){
     if (!alive(dfdCard)){
-        console.log('AI attack is succesful');
         msg('The '+atkCard.idstr+'\'s attack was succesful! They are granted a potion', false);
         army2.level(atkCard);
-        if (army2.hpmin().hp != army2.hpmin().lvl){
+        potTaker = AI.needPot();
+        if (potTaker){
+            if (potTaker.hp != potTaker.lvl){
             setTimeout(function(){
                 AIPot(drawPot())
             }, 500);
+            }
         } else {
             msg('The '+atkCard.suit+'\s can\'t use the potion', false);
             user.state = 'atk';
@@ -579,27 +581,28 @@ AI.potCheck = function(atkCard, dfdCard){
 
 //determines how AI uses a pot where h is pot value
 function AIPot (h){
-    c = army2.hpmin();
+    c = AI.needPot();
     chp = c.hp;
     if ((c.hp + h) <= c.lvl){
         c.hp = c.hp + h;
     } else {
         c.hp = c.lvl;
     }
-    msg(c.idstr+'\'s health has been restored from to '+c.hp);
+    msg(c.idstr+'\'s health has been restored to '+c.hp);
     renderField();
 }
-
-function needPot(army){
+//uses AI pots intelligently
+//lmao at the freudian slip in this method name
+AI.needPot = function(){
     //if king is low, heal the goddam king first
-    if (army1.card(14).hp < 5){
-        return army.card(14);
+    if (army2.card(14).hp < 5){
+        return army2.card(14);
     }
     //the queen is also critical
-    if (army1.card(13).hp < 6){
-        return arm.card(13);
-    } else if (army.hpmin().val >= 7){
-        return army.hpmin();
+    if (army2.card(13).hp < 6){
+        return army2.card(13);
+    } else if (army2.hpmin().val >= 7){
+        return army2.hpmin();
     }
 }
 /////////////////////////////////////////////////////////
