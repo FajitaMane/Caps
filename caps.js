@@ -319,7 +319,6 @@ function roll () {
 
 function checkEnd(){
     if(!alive(army1.card(14))){
-        msg('The '+army1.suit+' patriarch has fallen in battle. The '+army2.suit+' house will feast to this victory!');
         renderField();
         user.state = 'post';
         renderSplash('The game is over. The '+army2.suit+'\'s have won the battle but not the war.<hr>', "red");
@@ -327,10 +326,10 @@ function checkEnd(){
         return true;
     }
     if (!alive(army2.card(14))){
-        msg('The '+army1.suit+' house is victorious! Po\' up some mead!');
         renderField();
         user.state = 'post';
-        renderSplash('<h1>The game is over. The '+army2.suit+'\'s are victorious! Well played, user! Po\' up some mead!!!</h1>', "blue");
+        renderSplash('<h1>The game is over. The '+army1.suit+'\'s are victorious! Well played, user! Po\' up some mead!!!</h1>', "blue");
+        $('.helperDialog')[0].appendChild(user.newGameButton);
         return true;
     }
     return false;
@@ -587,7 +586,7 @@ function AIPot (h){
     } else {
         c.hp = c.lvl;
     }
-    msg(c.idstr+'\'s health has been restored from '+c.hp+' to '+c.hp);
+    msg(c.idstr+'\'s health has been restored from to '+c.hp);
     renderField();
 }
 
@@ -767,13 +766,13 @@ function handleInput(key) {
             case 'pot': c = army1.card(key);
                         if (alive(c)){
                             pot = drawPot();
-                            if ((c.hp + pot) <= c.val) {
-                                healed = Math.abs(c.val- (c.val + pot));
+                            if ((c.hp + pot) <= c.lvl) {
+                                var healed = Math.abs(c.lvl- (c.lvl + pot));
                                 c.hp = c.hp + pot;
                             } else {
-                                c.hp = c.val;
+                                c.hp = c.lvl;
                             }
-                            msg('You heal your '+c.sym+' for '+pot+' hp', true);
+                            msg('You heal your '+c.sym, true);
                             user.state = 'AI';
                             renderField();
                             setTimeout(function(){
@@ -1076,10 +1075,6 @@ function renderSplash(t, color){
     helperDialog.style.color = color;
     $('html').append(helperDialog);
 }
-
-$('#title').click(function(){
-    $('html').append(helperDialog);
-})
 
 $('#title').mouseover(function(){
   $(this).css('color', 'red');
